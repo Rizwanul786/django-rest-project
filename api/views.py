@@ -23,12 +23,16 @@ from django.views.decorators.csrf import csrf_exempt
 from api.management.custom_class.add_bulk import BulkCreateManager
 from api.management.commands.jira_script import Jira
 
+
+
+############################ Function based API ##############################
+
+
 # Test that adding a ticket to the DB results in the ticket being stored in the DB.
 # Test that updating a ticket in the DB results in the ticket being updated in the DB.
 # Test that the correct error message is returned if the ticket data is invalid.
 @permission_classes([IsAuthenticated, ])
 @api_view(['POST'])
-@authentication_classes([TokenAuthentication, ])
 def add_update_tickets(request):
     data=request.data
     update_tickets_list=[]
@@ -73,7 +77,6 @@ def add_update_tickets(request):
 # new tickets will add in the database and old tickest update
 @permission_classes([IsAuthenticated, ])
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication, ])
 def get_all_jira_tickets(request):
     refresh=request.query_params.get('refresh','')
     if refresh=='true':
@@ -88,38 +91,36 @@ def get_all_jira_tickets(request):
         raise APIException(e)
 
 
-# @permission_classes([IsAuthenticated, ])
-# @api_view(['POST'])
-# @authentication_classes([TokenAuthentication, ])
-# def add_new_products(request):
-#     bulk_mgr = BulkCreateManager(chunk_size=5000)
-#     data=request.data
-#     for product in data:
-#         try:
-#             bulk_mgr.add(Product(**product))
-#         except Exception as e:
-#             return Response({"Error":e})
-#     bulk_mgr.done()
-#     return Response({"message":"Successful add products"})
+@permission_classes([IsAuthenticated, ])
+@api_view(['POST'])
+def add_new_products(request):
+    bulk_mgr = BulkCreateManager(chunk_size=5000)
+    data=request.data
+    for product in data:
+        try:
+            bulk_mgr.add(Product(**product))
+        except Exception as e:
+            return Response({"Error":e})
+    bulk_mgr.done()
+    return Response({"message":"Successful add products"})
 
-# @permission_classes([IsAuthenticated, ])
-# @api_view(['PUT'])
-# @authentication_classes([TokenAuthentication, ])
-# def update_products(request):
-#     data=request.data
-#     pid_list=[obj["pid"] for obj in data]
-#     products=Product.objects.filter(pid__in=pid_list)
-#     try:
-#         for product in products:
-#             res=next(item for item in data if item["pid"]==product.pid)
-#             try:product.price=res["price"]
-#             except:pass
-#             try:product.active=res["active"]
-#             except:pass
-#         Product.objects.bulk_update(products,fields=['price','active'])
-#         return Response({"message":"Successful update products"})
-#     except Exception as e:
-#         raise APIException(e)
+@permission_classes([IsAuthenticated, ])
+@api_view(['PUT'])
+def update_products(request):
+    data=request.data
+    pid_list=[obj["pid"] for obj in data]
+    products=Product.objects.filter(pid__in=pid_list)
+    try:
+        for product in products:
+            res=next(item for item in data if item["pid"]==product.pid)
+            try:product.price=res["price"]
+            except:pass
+            try:product.active=res["active"]
+            except:pass
+        Product.objects.bulk_update(products,fields=['price','active'])
+        return Response({"message":"Successful update products"})
+    except Exception as e:
+        raise APIException(e)
 
 
 
